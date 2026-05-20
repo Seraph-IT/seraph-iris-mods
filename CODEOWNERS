@@ -1,0 +1,7 @@
+# Default owner — Seraph-IT engineering
+* @GaaraSeraph
+
+# Per-tool directories — extend with named maintainers as team grows
+/iris/   @GaaraSeraph
+/cortex/ @GaaraSeraph
+/misp/   @GaaraSeraph
