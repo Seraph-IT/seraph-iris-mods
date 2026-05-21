@@ -1,0 +1,10 @@
+[project]
+name = "misp-customer-tag-enforcer"
+version = "0.1.0"
+description = "MISP plugin: enforce customer:<slug> tag (defense-in-depth)"
+requires-python = ">=3.11"
+license = {text = "AGPL-3.0-or-later"}
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
