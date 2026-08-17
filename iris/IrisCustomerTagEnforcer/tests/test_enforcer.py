@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.enforcer import (
+from IrisCustomerTagEnforcer.enforcer import (
     UNKNOWN_TAG,
     CustomerTagEnforcer,
     InvalidCustomerTagError,

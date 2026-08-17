@@ -1,10 +1,23 @@
+[build-system]
+# See the note in the IRIS module: no build-system meant no backend, and the
+# code lived in `src/` while the import name is MispCustomerTagEnforcer.
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "misp-customer-tag-enforcer"
-version = "0.1.0"
-description = "MISP plugin: enforce customer:<slug> tag (defense-in-depth)"
+version = "0.2.0"
+description = "Customer-tag validation for MISP events (used by the out-of-band enforcer, ADR-012)"
 requires-python = ">=3.11"
 license = {text = "AGPL-3.0-or-later"}
+
+[tool.setuptools]
+packages = ["MispCustomerTagEnforcer"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

@@ -1,12 +1,29 @@
+[build-system]
+# Nothing could install this before: without a build-system there is no backend,
+# and the code sat in a directory called `src/` while the import name the IRIS
+# venv needs is IrisCustomerTagEnforcer. `python -m IrisCustomerTagEnforcer...`
+# therefore failed with ModuleNotFoundError in every configuration — which is
+# what the auto-repair timer did every five minutes until it was removed.
+# The package directory is now the import name, so a flat layout is enough.
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "iris-customer-tag-enforcer"
-version = "0.1.0"
+version = "0.2.0"
 description = "IRIS plugin: enforce customer:<slug> tag on every case (defense-in-depth)"
 requires-python = ">=3.11"
 license = {text = "AGPL-3.0-or-later"}
 
+[tool.setuptools]
+packages = ["IrisCustomerTagEnforcer"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# The tests import the package under the name production uses. They used to
+# import `src.enforcer`, so they exercised a module path that no deployment
+# could ever resolve — and the mismatch stayed invisible because both sides
+# passed on their own terms.
 pythonpath = ["."]
 
 [tool.ruff]

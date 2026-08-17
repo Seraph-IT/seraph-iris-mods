@@ -2,8 +2,12 @@
 
 The Iris pipeline calls into `CustomerTagEnforcer.validate(tags)` on each
 case create/update. Violations raise; the hook layer translates them into
-4xx HTTP responses with a structured log line that Wazuh ingests via the
-self-monitoring decoder (rule-range 102400-102499).
+4xx HTTP responses and writes a JSONL line that Wazuh matches
+(rule-range **102600-102699**, see `audit.py`).
+
+The range in this docstring used to read 102400-102499. That block was handed to
+`18-active-directory` on 2026-05-26, so a rule written against this text would
+have collided with someone else's detections.
 """
 from __future__ import annotations
 
@@ -11,6 +15,8 @@ import logging
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass
+
+from . import audit
 
 logger = logging.getLogger(__name__)
 
@@ -57,32 +63,28 @@ class CustomerTagEnforcer:
         customer_tags = [t for t in tags_list if t.startswith("customer:")]
 
         if not customer_tags:
-            logger.warning(
-                "iris-customer-tag-enforcer.missing",
-                extra={"tags_seen": tags_list},
-            )
+            audit.emit(audit.EVENT_MISSING, tags_seen=tags_list)
             raise MissingCustomerTagError("Case has no customer:<slug> tag.")
 
         if len(customer_tags) > 1:
-            logger.error(
-                "iris-customer-tag-enforcer.multiple",
-                extra={"tags_seen": customer_tags},
-            )
+            audit.emit(audit.EVENT_MULTIPLE, tags_seen=customer_tags)
             raise MultipleCustomerTagsError(customer_tags)
 
         tag = customer_tags[0]
         if not CUSTOMER_TAG_PATTERN.match(tag):
-            logger.error(
-                "iris-customer-tag-enforcer.invalid",
-                extra={"tag_seen": tag},
-            )
+            audit.emit(audit.EVENT_INVALID, tag_seen=tag)
             raise InvalidCustomerTagError(tag)
 
         slug = tag.removeprefix("customer:")
-        logger.info(
-            "iris-customer-tag-enforcer.ok",
-            extra={"customer_slug": slug},
-        )
+        if tag == UNKNOWN_TAG:
+            # Rule 102623 watches for the placeholder: a case carrying it was
+            # repaired rather than tagged by whoever opened it, and still needs
+            # a human to say which customer it belongs to.
+            audit.emit(audit.EVENT_AUTO_REPAIR, customer_slug=slug)
+        # The clean case is deliberately not an event. It happens on every valid
+        # request; a stream that carries it would drown the four that matter and
+        # no rule watches it.
+        logger.debug("customer tag accepted: %s", slug)
         return ValidationResult(customer_slug=slug, matched_tag=tag)
 
     def needs_review(self, tags: Iterable[str]) -> bool:
